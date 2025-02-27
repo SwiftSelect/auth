@@ -17,6 +17,7 @@ from app.models.users import User
 from app.models.roles import Role
 from app.models.actions import Action
 from app.models.roles_actions_map import RoleActionMap
+from app.models.orgs import Org
 def init_db():
     Base.metadata.create_all(bind=engine)
 init_db()

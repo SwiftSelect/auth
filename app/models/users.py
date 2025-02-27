@@ -11,5 +11,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
+    org_id = Column(Integer, ForeignKey("orgs.id"))
 
     role = relationship("Role", back_populates="users")
+    org = relationship("Org", back_populates="users")
