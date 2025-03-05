@@ -19,9 +19,21 @@ def create_refresh_token(data: dict):
     expire = datetime.utcnow() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
     return create_token(data, expire)
 
-def create_token(data: dict, expire: timedelta):
-    to_encode = data.copy()
-    to_encode.update({"exp": expire})
+def create_token(data: dict, expire: datetime):
+    # Handle Pydantic models by converting to dict
+    if hasattr(data, "dict"):
+        # This is a Pydantic model
+        to_encode = data.dict()
+    elif hasattr(data, "__dict__"):
+        # This is a regular class
+        to_encode = data.__dict__.copy()
+    else:
+        # This is already a dict or dict-like object
+        to_encode = dict(data)
+    
+    # Convert datetime to timestamp for JWT encoding
+    to_encode["exp"] = int(expire.timestamp())
+    
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token: str):

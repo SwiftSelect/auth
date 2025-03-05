@@ -17,7 +17,7 @@ def signup(user: UserSignup, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=UserLoginResponse)
 def login(form_data: UserLogin, db: Session = Depends(get_db)):
-    tokens = authenticate_user(db, form_data.username, form_data.password)
+    tokens = authenticate_user(db, form_data)
     if not tokens:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     return tokens

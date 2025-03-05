@@ -14,34 +14,52 @@ def register_user(db: Session, user: UserSignup):
         return None
     
     hashed_pw = hash_password(user.password)
-    new_user = User(username=user.email, password=hashed_pw, role=user.role, firstname=user.firstname, lastname=user.lastname)
+    new_user = User(email=user.email, password=hashed_pw, role_id=user.role, firstname=user.firstName, lastname=user.lastName)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
 def authenticate_user(db: Session, user: UserLogin):
-    user = db.query(User).filter(User.email == user.email).first()
-    if not user or not verify_password(user.password, user.password):
+    c_u = db.query(User).filter(User.email == user.email).first()
+    if not c_u or not verify_password(user.password, c_u.password):
         return None
-    claims = TokenClaims(email=user.email, role=user.role, fullname=user.firstname+" "+user.lastname)
+    claims = TokenClaims(email=c_u.email, role=c_u.role.name, fullname=c_u.firstname+" "+c_u.lastname)
     access_token = create_access_token(claims)
     refresh_token = create_refresh_token(claims)
-    return UserLoginResponse(access_token, refresh_token)
+    return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
 
 def validate_token(db: Session, token:str, action: str):
     user = get_user(db, token)
-    role = db.query(Role).get(user.role)
-    role_action = db.query(RoleActionMap).filter(role_id=role.id, action_name=action)
+    role = db.query(Role).filter(Role.id == user.role_id).first()
+    if not role:
+        raise HTTPException(status_code=403, detail="Role not found")
+        
+    # Check if the role has permission for the action
+    role_action = db.query(RoleActionMap).filter(
+        RoleActionMap.role_id == role.id, 
+        RoleActionMap.action_name == action
+    ).first()
+    
     if not role_action:
         raise HTTPException(status_code=403, detail="Forbidden")
-    return True
+        
+    # Return user information in the response
+    access_token = create_access_token({"email": user.email, "role": role.name})
+    refresh_token = create_refresh_token({"email": user.email, "role": role.name})
+    return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
 
 def get_user(db: Session, token: str):
-    tc: TokenClaims = decode_token(token)
-    if not tc:
+    decoded_token = decode_token(token)
+    if not decoded_token:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    user = db.query(User).filter(User.email == tc.email).first()
-    if not user or not verify_password(user.password, user.password):
-        raise HTTPException(status_code=401, detail="Unauthorized") 
-    return user
+    
+    # Create a TokenClaims object from the decoded token
+    try:
+        tc = TokenClaims(**decoded_token)
+        user = db.query(User).filter(User.email == tc.email).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Unauthorized") 
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token format: {str(e)}")
