@@ -15,3 +15,7 @@ class User(Base):
 
     role = relationship("Role", back_populates="users")
     org = relationship("Org", back_populates="users")
+    
+    @property
+    def organization(self):
+        return self.org

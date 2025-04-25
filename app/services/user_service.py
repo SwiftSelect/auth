@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.users import User
 from app.models.roles import Role
+from app.models.orgs import Org
 from app.models.roles_actions_map import RoleActionMap
 from app.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from app.dto.user_signup import UserSignup
@@ -14,7 +15,13 @@ def register_user(db: Session, user: UserSignup):
         return None
     
     hashed_pw = hash_password(user.password)
-    new_user = User(email=user.email, password=hashed_pw, role_id=user.role, firstname=user.firstName, lastname=user.lastName)
+    org_id = None
+    if user.role == 0 or 1:
+        org = db.query(Org).filter(Org.domain == user.email.split("@")[1]).any()
+        if not org:
+            raise HTTPException(status_code = 404, detail="Organization not resgistered")
+        org_id = org.id
+    new_user = User(email=user.email, password=hashed_pw, role_id=user.role, firstname=user.firstName, lastname=user.lastName, org_id=org_id)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -49,17 +56,17 @@ def validate_token(db: Session, token:str, action: str):
     refresh_token = create_refresh_token({"email": user.email, "role": role.name})
     return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
 
-def get_user(db: Session, token: str):
+def get_user(db: Session, token: str) -> User:
     decoded_token = decode_token(token)
     if not decoded_token:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     
     # Create a TokenClaims object from the decoded token
     try:
-        tc = TokenClaims(**decoded_token)
-        user = db.query(User).filter(User.email == tc.email).first()
+        user = db.query(User).filter(User.email == decoded_token['email']).first()
         if not user:
-            raise HTTPException(status_code=401, detail="Unauthorized") 
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        print(f"user: {user}")
         return user
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token format: {str(e)}")

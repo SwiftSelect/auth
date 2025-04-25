@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.user_service import register_user, authenticate_user, validate_token, get_user
 from app.dto.user_signup import  UserSignup 
-from app.dto.user_login import UserLogin, UserLoginResponse
+from app.dto.user_login import UserLogin, UserLoginResponse, UserResponse
 from app.dto.validate import ValidateUser
+from typing import Optional
 
 router = APIRouter()
 
@@ -26,6 +27,9 @@ def login(form_data: UserLogin, db: Session = Depends(get_db)):
 def validate(data: ValidateUser, db: Session = Depends(get_db)):
     return validate_token(db, data.token, data.action)
 
-@router.post("/get_user", response_model=UserLoginResponse)
-def user(token: str, db: Session = Depends(get_db)):
+@router.get("/get_user", response_model=UserResponse)
+def user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    if not authorization:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    token = authorization.split("Bearer ")[1]
     return get_user(db, token)
