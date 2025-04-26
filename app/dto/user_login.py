@@ -5,6 +5,11 @@ class Org(BaseModel):
     id: int
     name: str
     domain: str
+    description: Optional[str] = None
+    size: Optional[str] = "100-500 employees"
+    industry: Optional[str] = "Technology"
+    class Config:
+        orm_mode = True
 
 class UserLogin(BaseModel):
     email: str

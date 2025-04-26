@@ -7,4 +7,7 @@ class Org(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     domain = Column(String, nullable=False, unique=True)
+    description = Column(String, nullable=True)
+    size = Column(String, nullable=True, default="100-500 employees")
+    industry = Column(String, nullable=True, default="Technology")
     users = relationship("User", back_populates="org")
