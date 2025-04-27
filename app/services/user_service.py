@@ -16,10 +16,10 @@ def register_user(db: Session, user: UserSignup):
     
     hashed_pw = hash_password(user.password)
     org_id = None
-    if user.role == 0 or 1:
+    if user.role in [1, 2]:  # Only ADMIN(1) and RECRUITER(2) need org check
         org = db.query(Org).filter(Org.domain == user.email.split("@")[1]).any()
         if not org:
-            raise HTTPException(status_code = 404, detail="Organization not resgistered")
+            raise HTTPException(status_code = 404, detail="Organization not registered")
         org_id = org.id
     new_user = User(email=user.email, password=hashed_pw, role_id=user.role, firstname=user.firstName, lastname=user.lastName, org_id=org_id)
     db.add(new_user)

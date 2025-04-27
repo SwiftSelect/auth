@@ -8,7 +8,7 @@ app = FastAPI(title="Authorization Service with Role-Based Access Control")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],  # Frontend URL, jobs-svc
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
