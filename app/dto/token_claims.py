@@ -3,4 +3,5 @@ from pydantic import BaseModel
 class TokenClaims(BaseModel):
     email: str
     role: str
-    fullname: str
+    firstname: str
+    lastname: str

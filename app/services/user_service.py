@@ -31,7 +31,7 @@ def authenticate_user(db: Session, user: UserLogin):
     c_u = db.query(User).filter(User.email == user.email).first()
     if not c_u or not verify_password(user.password, c_u.password):
         return None
-    claims = TokenClaims(email=c_u.email, role=c_u.role.name, fullname=c_u.firstname+" "+c_u.lastname)
+    claims = TokenClaims(email=c_u.email, role=c_u.role.name, firstname=c_u.firstname, lastname=c_u.lastname)
     access_token = create_access_token(claims)
     refresh_token = create_refresh_token(claims)
     return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
