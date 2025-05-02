@@ -5,3 +5,4 @@ class TokenClaims(BaseModel):
     role: str
     firstname: str
     lastname: str
+    id: int
