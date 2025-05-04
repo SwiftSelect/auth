@@ -17,7 +17,7 @@ def register_user(db: Session, user: UserSignup):
     hashed_pw = hash_password(user.password)
     org_id = None
     if user.role in [1, 2]:  # Only ADMIN(1) and RECRUITER(2) need org check
-        org = db.query(Org).filter(Org.domain == user.email.split("@")[1]).any()
+        org = db.query(Org).filter(Org.domain == user.email.split("@")[1]).first()
         if not org:
             raise HTTPException(status_code = 404, detail="Organization not registered")
         org_id = org.id
@@ -70,3 +70,9 @@ def get_user(db: Session, token: str) -> User:
         return user
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token format: {str(e)}")
+    
+def get_org_details(db: Session, org_id: int):
+    org = db.query(Org).filter(Org.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org

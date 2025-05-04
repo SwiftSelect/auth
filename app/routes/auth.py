@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.services.user_service import register_user, authenticate_user, validate_token, get_user
+from app.services.user_service import register_user, authenticate_user, validate_token, get_user, get_org_details
 from app.dto.user_signup import  UserSignup 
-from app.dto.user_login import UserLogin, UserLoginResponse, UserResponse
+from app.dto.user_login import UserLogin, UserLoginResponse, UserResponse, Org
 from app.dto.validate import ValidateUser
 from typing import Optional
 
@@ -33,3 +33,7 @@ def user(authorization: Optional[str] = Header(None), db: Session = Depends(get_
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     token = authorization.split("Bearer ")[1]
     return get_user(db, token)
+
+@router.get("/get_org_details", response_model=Org)
+def get_org(org_id: int, db: Session = Depends(get_db)):
+    return get_org_details(db, org_id)
